@@ -95,7 +95,18 @@ class TerminalResponsePlugin(octoprint.plugin.TemplatePlugin,
                     for i in range(1, len(m.groups())+1):
                         command = str.replace(command, "("+str(i)+")", m.group(i))
                     for split_line in command.splitlines():
-                        self._logger.info("Sending command: " + split_line)
-                        self._printer.commands(split_line)
+                        if self.regex_definitions[regex]["type"] == "system":
+                            self._logger.info("Executing system command: " + split_line)
+
+                            try:
+                                result = os.system(split_line)
+                                self._logger.info("Command '%s' returned: %s" % (split_line, result))
+                            except:
+                                error = sys.exc_info()[0]
+                                self._logger.exception("Error executing command '%s': %s" % (split_line, error))
+
+                        else:
+                            self._logger.info("Sending gcode command: " + split_line)
+                            self._printer.commands(split_line)
 
         return line
